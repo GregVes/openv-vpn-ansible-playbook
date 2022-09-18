@@ -1,0 +1,8 @@
+---
+# vars file for openvpn-role
+admin: gregory
+open_vpn_package: openvpn
+easy_rsa_package_url: https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.0.8.tgz
+compressed_easyrsa_package: /home/gregory/EasyRSA-3.0.8.tgz
+decompressed_easyrsa_package: /home/gregory/EasyRSA-3.0.8
+easyrsa_home: /home/gregory/easyrsa/
