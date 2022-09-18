@@ -1,0 +1,6 @@
+---
+- name: configure openvn
+  hosts: all
+  remote_user: debian
+  roles:
+    - openvpn-role

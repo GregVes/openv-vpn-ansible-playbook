@@ -1,0 +1,59 @@
+---
+# tasks file for openvpn-role
+- name: Check if openvpnv is installed
+  package_facts:
+    manager: "auto"
+
+- name: Install openvpn
+  ansible.builtin.apt:
+    name: "{{ open_vpn_package }}"
+    state: present
+    update_cache: true
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Download compressed easyrsa package
+  get_url:
+    url: "{{ easy_rsa_package_url }}"
+    dest: "/home/{{ admin }}"
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Extract easyrsa package
+  ansible.builtin.unarchive:
+    src: "{{ compressed_easyrsa_package }}"
+    dest: /home/gregory
+    remote_src: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Set easyrsa working dir
+  ansible.builtin.file:
+    path: "{{ easyrsa_home }}"
+    state: directory
+  when: "'openvpn' not in ansible_facts.packages"
+
+# NOTE: copy does work well for copying recursively a dir content into another dir
+- name: Copy easyrsa package files into easyrsa home dir
+  ansible.builtin.shell: "cp -R {{ decompressed_easyrsa_package }}/*  {{ easyrsa_home }}"
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: remove compressed easyrsa package
+  ansible.builtin.file:
+    path: "{{ compressed_easyrsa_package }}"
+    state: absent
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: remove decompressed easyrsa package
+  ansible.builtin.file:
+    path: "{{ decompressed_easyrsa_package }}"
+    state: absent
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: move easyrsa binary to /usr/local/bin
+  ansible.builtin.copy:
+    src: "{{ easyrsa_home }}/easyrsa"
+    dest: /usr/local/bin
+    remote_src: true
+    mode: 0770
+    owner: "{{ admin }}"
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
