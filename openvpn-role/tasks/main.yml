@@ -36,24 +36,51 @@
   ansible.builtin.shell: "cp -R {{ decompressed_easyrsa_package }}/*  {{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: remove compressed easyrsa package
+- name: Remove compressed easyrsa package
   ansible.builtin.file:
     path: "{{ compressed_easyrsa_package }}"
     state: absent
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: remove decompressed easyrsa package
+- name: Remove decompressed easyrsa package
   ansible.builtin.file:
     path: "{{ decompressed_easyrsa_package }}"
     state: absent
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: move easyrsa binary to /usr/local/bin
-  ansible.builtin.copy:
-    src: "{{ easyrsa_home }}/easyrsa"
-    dest: /usr/local/bin
-    remote_src: true
-    mode: 0770
-    owner: "{{ admin }}"
-  become: true
+- name: Remove default vars.example
+  ansible.builtin.file:
+    path: "{{ easyrsa_home }}/vars.example"
+    state: absent
   when: "'openvpn' not in ansible_facts.packages"
+
+- name: Template vars file
+  ansible.builtin.template:
+    src: vars.j2
+    dest: "{{ easyrsa_home }}/vars"
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Init PKI
+  ansible.builtin.shell: ./easyrsa init-pki
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Generate CA certificate and private key
+  ansible.builtin.shell: "EASYRSA_REQ_CN={{ easyrsa_ca_common_name }} sudo ./easyrsa --batch build-ca nopass"
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: "'openvpn' not in ansible_facts.packages"
+
+# - name: Generate server certificate and private key
+#   ansible.builtin.shell: "sudo ./easyrsa --batch gen-req server nopass"
+#   args:
+#     chdir: "{{ easyrsa_home }}"
+#   when: "'openvpn' not in ansible_facts.packages"
+
+# - name: copy server key to /etc/openvpn/server
+#   ansible.builtin.copy:
+#     remote_src: true
+#     src: "{{ easyrsa_home }}/pki/private/server.key"
+#     dest: /etc/openvpn/server
+#   become: true
