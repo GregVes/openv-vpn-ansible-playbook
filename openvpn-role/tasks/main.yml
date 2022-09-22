@@ -78,7 +78,7 @@
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy server key to /etc/openvpn/server
+- name: Copy server key to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/pki/private/server.key"
@@ -95,7 +95,7 @@
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy ca.cert to /etc/openvpn/server
+- name: Copy ca.cert to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/pki/ca.crt"
@@ -103,7 +103,7 @@
   become: true
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy server.crt to /etc/openvpn/server
+- name: Copy server.crt to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/pki/issued/server.crt"
@@ -111,13 +111,13 @@
   become: true
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: generate pre-shared static key to encrypt control channel packets
+- name: Generate pre-shared static key to encrypt control channel packets
   ansible.builtin.shell: sudo openvpn --genkey --secret ta.key
   args:
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy ta.key to /etc/openvpn/server
+- name: Copy ta.key to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/ta.key"
