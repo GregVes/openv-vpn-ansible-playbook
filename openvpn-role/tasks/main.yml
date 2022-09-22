@@ -123,5 +123,5 @@
     src: "{{ easyrsa_home }}/ta.key"
     dest: /etc/openvpn/server
   become: true
-  #when: "'openvpn' not in ansible_facts.packages"
+  when: "'openvpn' not in ansible_facts.packages"
 
