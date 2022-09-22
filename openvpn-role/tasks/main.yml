@@ -72,15 +72,56 @@
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-# - name: Generate server certificate and private key
-#   ansible.builtin.shell: "sudo ./easyrsa --batch gen-req server nopass"
-#   args:
-#     chdir: "{{ easyrsa_home }}"
-#   when: "'openvpn' not in ansible_facts.packages"
+- name: Generate server certificate and private key
+  ansible.builtin.shell: "sudo ./easyrsa --batch gen-req server nopass"
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: "'openvpn' not in ansible_facts.packages"
 
-# - name: copy server key to /etc/openvpn/server
-#   ansible.builtin.copy:
-#     remote_src: true
-#     src: "{{ easyrsa_home }}/pki/private/server.key"
-#     dest: /etc/openvpn/server
-#   become: true
+- name: copy server key to /etc/openvpn/server
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ easyrsa_home }}/pki/private/server.key"
+    dest: /etc/openvpn/server
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Sign the server request
+  ansible.builtin.shell: |
+    cat << EOF | sudo ./easyrsa sign-req server server
+    yes
+    EOF
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: copy ca.cert to /etc/openvpn/server
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ easyrsa_home }}/pki/ca.crt"
+    dest: /etc/openvpn/server
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: copy server.crt to /etc/openvpn/server
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ easyrsa_home }}/pki/issued/server.crt"
+    dest: /etc/openvpn/server
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: generate pre-shared static key to encrypt control channel packets
+  ansible.builtin.shell: sudo openvpn --genkey --secret ta.key
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: copy ta.key to /etc/openvpn/server
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ easyrsa_home }}/ta.key"
+    dest: /etc/openvpn/server
+  become: true
+  #when: "'openvpn' not in ansible_facts.packages"
+
