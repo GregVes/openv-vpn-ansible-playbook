@@ -16,5 +16,17 @@ easyrsa_req_ou: "gregentoo EASY CA"
 
 easyrsa_ca_common_name: "gregentoo_CA"
 
+openvpn_port: 1194
+openvpn_proto: udp
+openvpn_explicit_exit_notify: 1
+openvpn_internal_network: 10.5.0.0
+# buggy if not user. When starting systemd service, it complains
+# that a process is already listening at openvpn_port. Anoter
+# instance is already up
+openvpn_user: root
+openvpn_group: nogroup
+openvpn_server_conf: /etc/openvpn/server/server.conf
+openvpn_dest_interface: eno1
+
 clients:
   - "gregory.vespasien"

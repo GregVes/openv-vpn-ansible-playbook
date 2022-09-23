@@ -220,3 +220,36 @@
   with_together:
     - "{{ clients_list.results }}"
     - "{{ clients }}"
+
+- name: Template server.conf file
+  ansible.builtin.template:
+    src: server.conf.j2
+    dest: "{{ openvpn_server_conf }}"
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Setup IP forwarding (tun -> eno1)
+  lineinfile:
+    path: "/etc/sysctl.conf"
+    regexp: '^#net.ipv4.ip_forward=1'
+    line: net.ipv4.ip_forward=1
+    state: present
+  become: true
+  when: "'openvpn' not in ansible_facts.packages"
+
+# - name: Check if ufw is installed
+#   package_facts:
+#     manager: "auto"
+
+# - name: Update /etc/ufw/before.rules
+#   ansible.builtin.blockinfile:
+#     path: /etc/ufw/before.rules
+#     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+#     insertafter: '*nat'
+#     block: |
+#       *nat
+#       :POSTROUTING ACCEPT [0:0]
+#       -A POSTROUTING -o "{{ openvpn_dest_interface }}" -j MASQUERADE
+#       COMMIT
+#   become: true
+#   #when: "'ufw' not in ansible_facts.packages"
