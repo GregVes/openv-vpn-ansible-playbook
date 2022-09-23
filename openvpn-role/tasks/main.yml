@@ -78,7 +78,7 @@
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy server key to /etc/openvpn/server
+- name: Copy server key to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/pki/private/server.key"
@@ -95,7 +95,7 @@
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy ca.cert to /etc/openvpn/server
+- name: Copy ca.cert to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/pki/ca.crt"
@@ -103,7 +103,7 @@
   become: true
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy server.crt to /etc/openvpn/server
+- name: Copy server.crt to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/pki/issued/server.crt"
@@ -111,13 +111,13 @@
   become: true
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: generate pre-shared static key to encrypt control channel packets
+- name: Generate pre-shared static key to encrypt control channel packets
   ansible.builtin.shell: sudo openvpn --genkey --secret ta.key
   args:
     chdir: "{{ easyrsa_home }}"
   when: "'openvpn' not in ansible_facts.packages"
 
-- name: copy ta.key to /etc/openvpn/server
+- name: Copy ta.key to /etc/openvpn/server
   ansible.builtin.copy:
     remote_src: true
     src: "{{ easyrsa_home }}/ta.key"
@@ -125,3 +125,98 @@
   become: true
   when: "'openvpn' not in ansible_facts.packages"
 
+- name: Create clients keys dir
+  ansible.builtin.file:
+    mode: '0700'
+    owner: "{{ admin }}"
+    path: "{{ easyrsa_home }}/clients-keys"
+    recurse: true
+    state: directory
+  when: "'openvpn' not in ansible_facts.packages"
+
+
+- name: Check existing clients list
+  stat:
+    path: "{{ easyrsa_home }}/pki/private/{{ item }}.key"
+  register: clients_list
+  with_items: "{{ clients }}"
+
+- name: Create client if not already existing
+  ansible.builtin.shell: "sudo ./easyrsa --batch gen-req {{ item[1] }} nopass"
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: not item[0].stat.exists
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
+- name: Create client.name subdir of clients-keys dir
+  ansible.builtin.file:
+    mode: '0700'
+    owner: "{{ admin }}"
+    path: "{{ easyrsa_home }}/clients-keys/{{ item[1] }}"
+    state: directory
+  when: not item[0].stat.exists
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
+- name: Copy clients' private key to clients-keys dir
+  ansible.builtin.copy:
+    mode: '0700'
+    owner: "{{ admin }}"
+    src: "{{ easyrsa_home }}/pki/private/{{ item[1] }}.key"
+    dest: "{{ easyrsa_home }}/clients-keys/{{ item[1] }}"
+    remote_src: true
+  become: true
+  when: not item[0].stat.exists
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
+- name: Sign the server request
+  ansible.builtin.shell: |
+    cat << EOF | sudo ./easyrsa sign-req client "{{ item[1] }}"
+    yes
+    EOF
+  args:
+    chdir: "{{ easyrsa_home }}"
+  when: not item[0].stat.exists
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
+- name: Copy clients' certificate to clients-keys dir
+  ansible.builtin.copy:
+    mode: '0700'
+    owner: "{{ admin }}"
+    src: "{{ easyrsa_home }}/pki/issued/{{ item[1] }}.crt"
+    dest: "{{ easyrsa_home }}/clients-keys/{{ item[1] }}"
+    remote_src: true
+  become: true
+  when: not item[0].stat.exists
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
+- name: Copy ta.key to clients-keys dir
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ easyrsa_home }}/ta.key"
+    dest: "{{ easyrsa_home }}/clients-keys/{{ item[1] }}"
+  when: not item[0].stat.exists
+  become: true
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
+- name: Copy ca.crt to clients-keys dir
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ easyrsa_home }}/pki/ca.crt"
+    dest: "{{ easyrsa_home }}/clients-keys/{{ item[1] }}"
+  when: not item[0].stat.exists
+  become: true
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
