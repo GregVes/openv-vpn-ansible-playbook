@@ -280,3 +280,24 @@
     state: enabled
   become: true
   when: "'ufw' not in ansible_facts.packages"
+
+- name: enable openvpn service system apiVersion
+  ansible.builtin.systemd:
+    state: started
+    name: openvpn-server@server.service
+  become: true
+  when: "'ufw' not in ansible_facts.packages"
+
+# wait_for does not play well when UDP port
+- name: Pause for 10 seconds
+  ansible.builtin.pause:
+    seconds: 10
+  when: "'ufw' not in ansible_facts.packages"
+
+- name: Get openvpn server service status
+  ansible.builtin.systemd:
+    name: "openvpn-server@server.service"
+  register: openvpn_service_status
+
+- debug:
+    var: openvpn_service_status.status.ActiveState
