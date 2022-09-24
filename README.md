@@ -1,6 +1,6 @@
-# OpenVPN Ansible role
+# OpenVPN Ansible playbook
 
-An Ansible role to manage a PKI for OpenVPN
+A playbook to manage a PKI for OpenVPN
 
 ```sh
 sh run.sh
