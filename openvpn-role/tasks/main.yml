@@ -171,7 +171,7 @@
     - "{{ clients_list.results }}"
     - "{{ clients }}"
 
-- name: Sign the server request
+- name: Sign client requests
   ansible.builtin.shell: |
     cat << EOF | sudo ./easyrsa sign-req client "{{ item[1] }}"
     yes
@@ -322,7 +322,7 @@
   ansible.posix.synchronize:
     mode: pull
     src: "{{ easyrsa_home }}/client-configs/files"
-    dest: /Users/gregoryvespasien/personal/openv-vpn-ansible-role
+    dest: "{{ openvpn_client_configs_dest }}"
   become: true
 
 - name: restart openvpn service system apiVersion
