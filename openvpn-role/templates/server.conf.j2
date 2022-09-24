@@ -1,12 +1,13 @@
 # OpenVPN Port, Protocol, and the Tun
 port {{ openvpn_port }}
-proto udp {{ openvpn_proto }}
+proto {{ openvpn_proto }}
 dev tun
 
 # OpenVPN Server Certificate - CA, server key and certificate
 ca /etc/openvpn/server/ca.crt
 cert /etc/openvpn/server/server.crt
 key /etc/openvpn/server/server.key
+tls-crypt /etc/openvpn/server/ta.key 0
 
 #DH and CRL key
 #dh /etc/openvpn/server/dh.pem
@@ -17,7 +18,6 @@ dh none
 # Redirect all Connection through OpenVPN Server
 server {{ openvpn_internal_network }} 255.255.255.0
 push "redirect-gateway def1 bypass-dhcp"
-
 
 # Using the DNS from https://dns.watch
 push "dhcp-option DNS 208.67.222.222"

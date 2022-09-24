@@ -1,8 +1,9 @@
 ---
-# tasks file for openvpn-role
-- name: Check if openvpnv is installed
-  package_facts:
-    manager: "auto"
+- name: Check if openvpn is installed
+  ansible.builtin.stat:
+    path: /usr/sbin/openvpn
+  become: true
+  register: openvpn
 
 - name: Install openvpn
   ansible.builtin.apt:
@@ -10,73 +11,73 @@
     state: present
     update_cache: true
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Download compressed easyrsa package
   get_url:
     url: "{{ easy_rsa_package_url }}"
     dest: "/home/{{ admin }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Extract easyrsa package
   ansible.builtin.unarchive:
     src: "{{ compressed_easyrsa_package }}"
     dest: /home/gregory
     remote_src: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Set easyrsa working dir
   ansible.builtin.file:
     path: "{{ easyrsa_home }}"
     state: directory
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 # NOTE: copy does work well for copying recursively a dir content into another dir
 - name: Copy easyrsa package files into easyrsa home dir
   ansible.builtin.shell: "cp -R {{ decompressed_easyrsa_package }}/*  {{ easyrsa_home }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Remove compressed easyrsa package
   ansible.builtin.file:
     path: "{{ compressed_easyrsa_package }}"
     state: absent
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Remove decompressed easyrsa package
   ansible.builtin.file:
     path: "{{ decompressed_easyrsa_package }}"
     state: absent
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Remove default vars.example
   ansible.builtin.file:
     path: "{{ easyrsa_home }}/vars.example"
     state: absent
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Template vars file
   ansible.builtin.template:
     src: vars.j2
     dest: "{{ easyrsa_home }}/vars"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Init PKI
   ansible.builtin.shell: ./easyrsa init-pki
   args:
     chdir: "{{ easyrsa_home }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Generate CA certificate and private key
   ansible.builtin.shell: "EASYRSA_REQ_CN={{ easyrsa_ca_common_name }} sudo ./easyrsa --batch build-ca nopass"
   args:
     chdir: "{{ easyrsa_home }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Generate server certificate and private key
   ansible.builtin.shell: "sudo ./easyrsa --batch gen-req server nopass"
   args:
     chdir: "{{ easyrsa_home }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Copy server key to /etc/openvpn/server
   ansible.builtin.copy:
@@ -84,7 +85,7 @@
     src: "{{ easyrsa_home }}/pki/private/server.key"
     dest: /etc/openvpn/server
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Sign the server request
   ansible.builtin.shell: |
@@ -93,7 +94,7 @@
     EOF
   args:
     chdir: "{{ easyrsa_home }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Copy ca.cert to /etc/openvpn/server
   ansible.builtin.copy:
@@ -101,7 +102,7 @@
     src: "{{ easyrsa_home }}/pki/ca.crt"
     dest: /etc/openvpn/server
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Copy server.crt to /etc/openvpn/server
   ansible.builtin.copy:
@@ -109,13 +110,13 @@
     src: "{{ easyrsa_home }}/pki/issued/server.crt"
     dest: /etc/openvpn/server
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Generate pre-shared static key to encrypt control channel packets
   ansible.builtin.shell: sudo openvpn --genkey --secret ta.key
   args:
     chdir: "{{ easyrsa_home }}"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Copy ta.key to /etc/openvpn/server
   ansible.builtin.copy:
@@ -123,7 +124,7 @@
     src: "{{ easyrsa_home }}/ta.key"
     dest: /etc/openvpn/server
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Copy ta.key to pki dir
   ansible.builtin.copy:
@@ -131,7 +132,7 @@
     src: "{{ easyrsa_home }}/ta.key"
     dest: "{{ easyrsa_home }}/pki/ta.key"
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Create clients-config dir
   ansible.builtin.file:
@@ -140,7 +141,7 @@
     path: "{{ easyrsa_home }}/client-configs/keys"
     recurse: true
     state: directory
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Check existing clients list
   stat:
@@ -200,7 +201,7 @@
     src: server.conf.j2
     dest: "{{ openvpn_server_conf }}"
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Setup IP forwarding (tun -> eno1)
   lineinfile:
@@ -209,11 +210,23 @@
     line: net.ipv4.ip_forward=1
     state: present
   become: true
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
 - name: Check if ufw is installed
-  package_facts:
-    manager: "auto"
+  ansible.builtin.stat:
+    path: /usr/sbin/ufw
+  become: true
+  register: ufw
+
+- name: Edit DEFAULT_FORWARD_POLICY in /etc/default/ufw
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY'
+    line: DEFAULT_FORWARD_POLICY="ACCEPT"
+    state: present
+  become: true
+  register: ufw_config
+  when: ufw.stat.exists
 
 - name: Update /etc/ufw/before.rules
   ansible.builtin.blockinfile:
@@ -225,48 +238,39 @@
       -A POSTROUTING -o {{ openvpn_dest_interface }} -j MASQUERADE
       COMMIT
   become: true
-  when: "'ufw' not in ansible_facts.packages"
-
-- name: Edit DEFAULT_FORWARD_POLICY in /etc/default/ufw
-  ansible.builtin.lineinfile:
-    path: /etc/default/ufw
-    regexp: '^DEFAULT_FORWARD_POLICY'
-    line: DEFAULT_FORWARD_POLICY="ACCEPT"
-    state: present
-  become: true
-  when: "'ufw' not in ansible_facts.packages"
+  when: ufw.stat.exists
 
 - name: Allow openvpn port
   community.general.ufw:
     rule: allow
     port: "{{ openvpn_port }}"
   become: true
-  when: "'ufw' not in ansible_facts.packages"
+  when: ufw.stat.exists
 
 - name: disable ufw
   community.general.ufw:
     state: disabled
   become: true
-  when: "'ufw' not in ansible_facts.packages"
+  when: ufw.stat.exists
 
 - name: activate ufw
   community.general.ufw:
     state: enabled
   become: true
-  when: "'ufw' not in ansible_facts.packages"
+  when: ufw.stat.exists
 
 - name: enable openvpn service system apiVersion
   ansible.builtin.systemd:
     state: started
     name: openvpn-server@server.service
   become: true
-  when: "'ufw' not in ansible_facts.packages"
+  when: ufw.stat.exists
 
 # wait_for does not play well when UDP port
 - name: Pause for 10 seconds
   ansible.builtin.pause:
     seconds: 10
-  when: "'ufw' not in ansible_facts.packages"
+  when: ufw.stat.exists
 
 - name: Get openvpn server service status
   ansible.builtin.systemd:
@@ -280,20 +284,19 @@
   ansible.builtin.file:
     path: "{{ easyrsa_home }}/client-configs/files"
     state: directory
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
-- name: template default client conf
+- name: Template default client conf
   ansible.builtin.template:
     src: client.base.conf.j2
     dest: "{{ easyrsa_home }}/client-configs/client.base.conf"
-  when: "'openvpn' not in ansible_facts.packages"
+  when: not openvpn.stat.exists
 
-- name: template make_config.sh
+- name: Template make_config.sh
   ansible.builtin.template:
     src: make_config.sh.j2
     dest: "{{ easyrsa_home }}/client-configs/make_config.sh"
     mode: 0700
-  when: "'openvpn' not in ansible_facts.packages"
 
 - name: Copy ta.key and ca.cert to client-configs/keys
   ansible.builtin.copy:
@@ -303,11 +306,27 @@
   become: true
   with_items:
     - ["ca.crt", "ta.key"]
-  when: "'openvpn' not in ansible_facts.packages"
+
+- name: Run make_config.sh
+  ansible.builtin.command: "./make_config.sh {{ item[1] }}"
+  args:
+    chdir: "{{ easyrsa_home }}/client-configs"
+  become: true
+  when: not item[0].stat.exists
+  with_together:
+    - "{{ clients_list.results }}"
+    - "{{ clients }}"
+
 
 - name: Copy clients config files
   ansible.posix.synchronize:
     mode: pull
     src: "{{ easyrsa_home }}/client-configs/files"
     dest: /Users/gregoryvespasien/personal/openv-vpn-ansible-role
+  become: true
+
+- name: restart openvpn service system apiVersion
+  ansible.builtin.systemd:
+    state: restarted
+    name: openvpn-server@server.service
   become: true
