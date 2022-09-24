@@ -17,6 +17,6 @@ NOTE: for commodity, we create the whole PKI on the same server. You should rath
 * generated pre-shared `ta.key`
 * template `server.conf` and `client.base.conf`
 * generate `<client>.req` and `<client>.key` for non already existing clients
-* sign `<client>.req`  create `<client.cert>` for non already existing clients
+* sign `<client>.req`  create `<client>.cert` for non already existing clients
 * generate client config files
 * copy client config files to localhost's `openvpn_client_configs_dest`
