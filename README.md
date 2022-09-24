@@ -5,7 +5,7 @@ A playbook to manage a PKI for OpenVPN
 ```sh
 sh run.sh
 ```
-## What does this module do?
+## What does this playbook do?
 
 NOTE: for commodity, we create the whole PKI on the same server. You should rather have dedicated CA (validating and signing certs) and the vpn (run openvpn) servers
 
