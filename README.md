@@ -11,7 +11,7 @@ NOTE: for commodity, we create the whole PKI on the same server. You should rath
 
 This playbook creates the PKI allowing clients to tunnel their traffic to an OpenVPN server (see `inventory.yml`). When a client referenced in `clients` list is not registered on the VPN server, it is automatically created. 
 
-* install easyrsa `3.0.8` in a dedicated `easyrsa_home`dir
+* install easyrsa `3.0.8` in a dedicated `easyrsa` home dir
 * init the PKI
 * generate `ca.crt` and `ca.key`
 * generate `server.key` and `server.req`
