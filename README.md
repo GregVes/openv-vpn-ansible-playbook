@@ -3,13 +3,16 @@
 A playbook to manage a PKI for OpenVPN
 
 ```sh
-ansible-playbook -i inventory.yml playbook.yml --extra-vars="host=<host-ip> host_user=<host-user> private_key=<ssh-private-key-location>"
+ansible-playbook \
+    -i inventory.yml \
+    playbook.yml \
+    --extra-vars="variable_host=<host-ip> variable_user=<host-user> variable_private_key=<ssh-private-key-location>"
 ```
 ## What does this playbook do?
 
 NOTE: for commodity, we create the whole PKI on the same server. You should rather have dedicated CA (validating and signing certs) and the vpn (run openvpn) servers
 
-This playbook creates the PKI allowing clients to tunnel their traffic to an OpenVPN server (see `inventory.yml`). When a client referenced in `clients` list is not registered on the VPN server, it is automatically created. 
+This playbook creates the PKI allowing clients to tunnel their traffic to an OpenVPN server (`variable_host`, `variable_user` and `variable_private_key`). When a client referenced in `clients` list is not registered on the VPN server, it is automatically created. 
 
 * install easyrsa `3.0.8` in a dedicated `easyrsa` home dir
 * init the PKI
