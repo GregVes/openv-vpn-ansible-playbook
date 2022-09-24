@@ -6,7 +6,9 @@ KEY_DIR={{ easyrsa_home }}/client-configs/keys
 OUTPUT_DIR={{ easyrsa_home }}/client-configs/files
 BASE_CONFIG={{ easyrsa_home }}/client-configs/client.base.conf
 
+
 cat ${BASE_CONFIG} \
+    <(echo) \
     <(echo -e '<ca>') \
     ${KEY_DIR}/ca.crt \
     <(echo -e '</ca>\n<cert>') \
