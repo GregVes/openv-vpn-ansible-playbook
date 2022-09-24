@@ -38,6 +38,7 @@ keepalive 20 60
 persist-key
 persist-tun
 compress lz4
+push "compress lz4"
 daemon
 user {{ openvpn_user }}
 group {{ openvpn_group }}
