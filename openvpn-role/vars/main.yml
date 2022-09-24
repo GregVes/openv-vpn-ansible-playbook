@@ -27,7 +27,7 @@ openvpn_user: root
 openvpn_group: nogroup
 openvpn_server_conf: /etc/openvpn/server/server.conf
 openvpn_dest_interface: eno1
-openvpn_client_configs_dest: /Users/gregoryvespasien/personal/openv-vpn-ansible-role
+openvpn_client_configs_dest: /Users/gregoryvespasien/personal/openv-vpn-ansible-playbook
 
 clients:
   - "gregory.vespasien"

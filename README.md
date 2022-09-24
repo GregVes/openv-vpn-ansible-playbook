@@ -3,7 +3,7 @@
 A playbook to manage a PKI for OpenVPN
 
 ```sh
-sh run.sh
+ansible-playbook -i inventory.yml playbook.yml --extra-vars="host=<host-ip> host_user=<host-user> private_key=<ssh-private-key-location>"
 ```
 ## What does this playbook do?
 
